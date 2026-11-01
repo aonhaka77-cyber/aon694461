@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>사이트 편집 | Aon</title>
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/admin.css">
+    <script src="/admin.js" defer></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="/">Aon</a>
+      <a class="editor-link" href="/">사이트로 돌아가기</a>
+    </header>
+    <main class="admin-main">
+      <section class="admin-intro">
+        <p class="eyebrow">AON EDITOR</p>
+        <h1>사이트 편집</h1>
+        <p class="intro">편집 키로 로그인한 뒤 이미지와 사이트 디자인을 관리할 수 있습니다.</p>
+      </section>
+
+      <section class="panel" id="login-panel">
+        <h2>편집자 로그인</h2>
+        <form id="login-form">
+          <label for="editor-key">편집 키</label>
+          <input id="editor-key" name="key" type="password" autocomplete="current-password" required>
+          <button type="submit">로그인</button>
+        </form>
+      </section>
+
+      <div id="editor" hidden>
+        <section class="panel">
+          <div class="panel-heading">
+            <h2>이미지 추가</h2>
+            <button class="secondary-button" id="logout-button" type="button">로그아웃</button>
+          </div>
+          <p>JPG, PNG, GIF, WebP, AVIF 이미지(최대 8MB)를 올릴 수 있습니다.</p>
+          <form id="upload-form">
+            <label for="image-file">이미지 파일</label>
+            <input id="image-file" name="image" type="file" accept="image/jpeg,image/png,image/gif,image/webp,image/avif" required>
+            <button type="submit">이미지 업로드</button>
+          </form>
+          <div class="image-list" id="image-list"></div>
+        </section>
+
+        <section class="panel">
+          <h2>사이트 CSS</h2>
+          <p>변경 사항은 SQLite에 저장되며 사이트 방문자에게 바로 적용됩니다. 최대 50,000자입니다.</p>
+          <form id="css-form">
+            <label for="css-editor">CSS 코드</label>
+            <textarea id="css-editor" spellcheck="false" rows="18"></textarea>
+            <button type="submit">CSS 저장</button>
+          </form>
+        </section>
+      </div>
+      <p class="status" id="status" role="status" aria-live="polite"></p>
+    </main>
+    <footer><span>© <span id="year"></span> Aon</span></footer>
+  </body>
+</html>

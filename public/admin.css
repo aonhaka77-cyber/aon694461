@@ -1,0 +1,139 @@
+.admin-main {
+  width: min(900px, calc(100% - 40px));
+  margin: 44px auto 80px;
+}
+
+.admin-intro {
+  margin-bottom: 36px;
+  text-align: center;
+}
+
+.admin-intro h1 {
+  margin: 12px 0;
+}
+
+.admin-intro .intro {
+  font-size: 1rem;
+}
+
+.panel {
+  margin: 20px 0;
+  padding: 28px;
+  border: 1px solid #e6e9f0;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 8px 26px rgb(32 37 55 / 4%);
+}
+
+.panel h2 {
+  margin: 0 0 12px;
+  font-size: 1.25rem;
+}
+
+.panel p {
+  color: #667085;
+  line-height: 1.6;
+}
+
+.panel form {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.panel label {
+  font-weight: 650;
+}
+
+.panel input[type="password"],
+.panel input[type="file"],
+.panel textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d6dae4;
+  border-radius: 8px;
+  font: inherit;
+}
+
+.panel textarea {
+  min-height: 280px;
+  resize: vertical;
+  background: #1d2330;
+  color: #e7eaf0;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  tab-size: 2;
+}
+
+.panel button {
+  justify-self: start;
+  padding: 11px 18px;
+  border: 0;
+  border-radius: 8px;
+  color: white;
+  background: #4355c5;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.panel button:hover {
+  background: #3546ae;
+}
+
+.panel .secondary-button {
+  color: #35405a;
+  background: #edf0f7;
+}
+
+.panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.image-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.image-item {
+  min-width: 0;
+  color: #667085;
+  font-size: 0.8rem;
+}
+
+.image-item img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.image-item span {
+  display: block;
+  overflow: hidden;
+  margin-top: 4px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status {
+  min-height: 1.5em;
+  color: #3546ae;
+  text-align: center;
+}
+
+.status.error {
+  color: #b42318;
+}
+
+@media (max-width: 600px) {
+  .panel {
+    padding: 20px;
+  }
+}
