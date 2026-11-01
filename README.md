@@ -19,6 +19,12 @@ Node.js 내장 SQLite를 사용하는 Aon 소개 사이트입니다. 공개 페�
 
 사이트는 `http://localhost:3000`, 편집 화면은 `http://localhost:3000/admin.html`입니다. 편집 키는 편집 화면에서 입력합니다.
 
+## GitHub Pages 배포
+
+`main` 브랜치의 `public/` 파일 변경은 GitHub Actions가 GitHub Pages에 자동 배포합니다. 도메인 `aon69446.p-e.kr`은 저장소의 `CNAME` 파일에 설정되어 있습니다. DNS의 A 레코드는 GitHub Pages IPv4 주소로 지정되어 있어야 합니다.
+
+GitHub Pages는 정적 호스팅이므로 공개 Aon 문서는 표시되지만, Node.js 서버와 SQLite가 필요한 CSS 저장, 로그인, 이미지 업로드 API는 Pages에서 실행되지 않습니다. 이 기능은 `run.bat`으로 실행하는 별도 Node.js 서버에서만 작동합니다. Pages의 편집 링크는 정적 호스팅의 이 제한과 문서 소스 수정 경로를 안내합니다.
+
 SQLite 데이터베이스는 `data/aon.sqlite`에 생성되고 이미지 파일은 `public/uploads/`에 저장됩니다. 두 위치를 정기적으로 백업하세요.
 
 ## 외부 공개 및 유동 IP

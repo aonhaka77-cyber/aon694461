@@ -1,7 +1,7 @@
 async function loadSite() {
   const response = await fetch("/api/site");
   if (!response.ok) {
-    throw new Error("사이트 콘텐츠를 불러오지 못했습니다.");
+    return;
   }
 
   const site = await response.json();
@@ -27,5 +27,5 @@ document.querySelector("#updated-date").textContent = new Intl.DateTimeFormat("k
   dateStyle: "long"
 }).format(new Date());
 loadSite().catch((error) => {
-  console.error(error);
+  console.warn("Dynamic site content is unavailable on this static host.", error);
 });

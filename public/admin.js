@@ -3,6 +3,10 @@ const editor = document.querySelector("#editor");
 const statusMessage = document.querySelector("#status");
 const cssEditor = document.querySelector("#css-editor");
 const imageList = document.querySelector("#image-list");
+const staticHostMessage = document.querySelector("#static-host-message");
+
+const isGitHubPages = location.hostname === "aon69446.p-e.kr"
+  || location.hostname.endsWith(".github.io");
 
 function setStatus(message, isError = false) {
   statusMessage.textContent = message;
@@ -106,6 +110,12 @@ document.querySelector("#logout-button").addEventListener("click", async () => {
 });
 
 document.querySelector("#year").textContent = new Date().getFullYear();
-loadEditor().catch((error) => {
-  setStatus(error.message, true);
-});
+if (isGitHubPages) {
+  loginPanel.hidden = true;
+  editor.hidden = true;
+  staticHostMessage.hidden = false;
+} else {
+  loadEditor().catch((error) => {
+    setStatus(error.message, true);
+  });
+}
