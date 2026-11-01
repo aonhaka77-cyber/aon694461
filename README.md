@@ -1,62 +1,73 @@
-# Aon 웹사이트
+# Aon Wiki.js
 
-GitHub Pages에 공개하는 Aon 문서형 위키입니다. PC에서 실행하는 Node.js API와 SQLite에 문서·CSS·이미지 정보를 저장하고, 관리자 화면에서 GitHub에 게시하면 GitHub Pages가 공개 사이트를 갱신합니다.
+Aon now runs on Wiki.js, an open-source wiki engine, with PostgreSQL for persistent data. GitHub Pages is a static host and cannot run Wiki.js, login, registration, or a live database. When the domain is moved to the Cloudflare Tunnel, visitors will reach the Wiki.js server running on this PC instead of the Pages copy.
 
-## 실행 (Windows)
+Wiki.js uses Markdown, not NamuWiki's proprietary engine or Namumark syntax. This setup provides a real open-source wiki engine with member accounts and collaborative pages, but it is not an exact NamuWiki clone.
 
-`run.bat`을 더블클릭하면 아래 작업을 자동으로 수행합니다.
+## Requirements
 
-- Node.js 22.13 이상이 없으면 `winget`으로 Node.js LTS 설치를 시도합니다. SQLite는 Node.js 내장 기능을 사용해 Visual Studio C++ 도구 설치가 필요 없습니다. 설치 완료 후 이 창에서 Node를 찾을 수 없다는 메시지가 나오면 창을 닫고 `run.bat`을 한 번 더 클릭하세요.
-- `.env`가 아직 없으면 편집 키와 세션 비밀값을 자동 생성합니다. 이때 표시되는 편집 키를 저장해 두세요.
-- 필요한 npm 패키지를 설치하고 서버를 시작한 뒤 브라우저에서 사이트를 엽니다. 기존 설치가 실패했더라도 다시 클릭하면 패키지 설치를 재시도합니다. 서버 로그가 표시되는 `Aon server` 창은 사이트를 사용하는 동안 열어 두세요.
+- Windows 10/11 with virtualization enabled
+- Docker Desktop for Windows, installed and running
+- Internet access to download the Wiki.js and PostgreSQL images
 
-직접 설정하고 실행하려면 Node.js 22.13 이상을 설치하고, 프로젝트 폴더에서 `npm install` 후 `npm start`를 실행하면 됩니다. `.env.example`을 복사해 `.env`를 만들고 비밀값을 설정할 수도 있습니다.
+Docker was not installed on the development PC when this configuration was prepared. Install Docker Desktop from [docker.com](https://www.docker.com/products/docker-desktop/), launch it, and wait until its engine is running.
 
-`.env`에서:
-   - `SITE_EDIT_KEY`: 관리자용 편집 키. `.env`에만 저장하며 공개하지 마세요.
-   - `SESSION_SECRET`: 32자 이상의 무작위 문자열. 예: `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`
-   - 사용자가 지정한 `akdhs323=gayok?` 키를 쓰려면 `SITE_EDIT_KEY` 값으로 설정합니다. 공개 사이트에서는 추측하기 쉬운 키 대신 더 긴 비밀 키를 권장합니다.
+## Run locally
 
-사이트는 `http://localhost:3000`, 편집 화면은 `http://localhost:3000/admin.html`입니다. 편집 키는 편집 화면에서 입력합니다. 편집 API는 GitHub 토큰 보호를 위해 이 PC에서만 접속할 수 있도록 `127.0.0.1`에 바인딩됩니다.
+1. Double-click `run.bat`.
+2. The first run creates `.env.wiki` with a random PostgreSQL password. `.env.wiki` is ignored by Git; do not share or commit it.
+3. Docker downloads Wiki.js and PostgreSQL, then opens `http://localhost:3030`.
+4. Complete Wiki.js's initial setup wizard and create the administrator account.
 
-## GitHub에 게시하기
+Subsequent starts use the existing PostgreSQL Docker volume. To inspect logs, open PowerShell in this folder and run:
 
-GitHub Pages는 Node.js API나 SQLite를 실행하지 않습니다. PC의 SQLite에 저장된 위키 문서와 CSS는 게시할 때 `public/index.html` 안에 데이터로 포함되고, 이미지는 별도 파일로 저장소에 커밋됩니다. GitHub Actions는 공개 사이트에 `index.html` 한 개와 스타일·스크립트·이미지 파일만 배포합니다. 로그인/편집 화면은 PC에서만 사용합니다.
+```powershell
+docker compose --env-file .env.wiki logs -f
+```
 
-본문은 나무위키 문서처럼 위키 문법으로 작성합니다. `== 제목 ==`은 문단 제목, `'''굵게'''`는 굵은 글씨, `''기울임''`은 기울임, `[[표시 문구|https://주소]]`는 링크, `* 항목`과 `# 항목`은 목록입니다. 이미지를 올린 다음 본문에서 원하는 위치에 커서를 두고 이미지 선택 후 **커서 위치에 {이미지} 삽입** 버튼을 누르세요. `{이미지}` 표식과 선택한 이미지가 해당 위치에서 함께 표시됩니다.
+Stop the containers with:
 
-게시 기능을 켜려면:
+```powershell
+docker compose --env-file .env.wiki down
+```
 
-1. GitHub에서 `aon694461` 저장소만 접근 가능한 Fine-grained personal access token을 만듭니다. `Contents: Read and write` 권한만 부여하세요.
-2. PC 프로젝트의 `.env` 맨 아래에 아래 값을 추가합니다. 토큰은 채팅, 브라우저 코드, 저장소에 올리지 마세요.
-   - `GITHUB_OWNER=aonhaka77-cyber`
-   - `GITHUB_REPO=aon694461`
-   - `GITHUB_BRANCH=main`
-   - `GITHUB_TOKEN=` 뒤에 발급받은 토큰
-3. `run.bat`으로 서버를 실행하고 `http://localhost:3000/admin.html`에서 로그인합니다.
-4. 위키 문서와 CSS를 저장하고, 이미지를 올려 본문에 삽입한 다음 **GitHub에 게시**를 누릅니다. 이미지 최대 100개, 한 번 게시하는 전체 이미지 용량은 50MB입니다.
+This keeps the database volume. Do not run `docker compose down -v` unless you intend to delete the wiki database.
 
-GitHub 게시가 완료되어도 외부 사이트 반영에는 GitHub Actions 배포 시간이 추가로 필요합니다. PC API는 PC에서 실행할 때만 편집 기능을 제공합니다. 공개 페이지의 데이터는 Pages에 배포된 정적 파일을 사용하므로 PC 서버를 외부에 포트포워딩할 필요는 없습니다.
+## Allow member registration and page creation
 
-## GitHub Pages 배포
+After creating the first administrator:
 
-`main` 브랜치의 `public/` 파일 변경은 GitHub Actions가 GitHub Pages에 자동 배포합니다. 도메인 `aon69446.p-e.kr`은 저장소의 `CNAME` 파일에 설정되어 있습니다. 이 하위 도메인의 DNS는 A 레코드 대신 GitHub Pages의 CNAME 대상을 사용해야 합니다. 자세한 내용은 아래 DNS 절차를 따르세요.
+1. In Wiki.js administration, enable the **Local** authentication strategy and self-registration.
+2. Set newly registered accounts to the regular `Users` group; do not assign administrator privileges.
+3. In group permissions, allow `Users` to read, create, and edit pages. Keep administration and user-management permissions restricted to `Administrators`.
+4. Keep guest read access enabled if visitors should view pages without signing in.
 
-GitHub Pages는 정적 호스팅이므로 공개 Aon 문서는 표시되지만 Node.js/SQLite API는 실행되지 않습니다. 편집은 PC에서 `run.bat`으로 실행한 서버를 통해 하고, 변경 후 GitHub에 게시합니다.
+Once self-registration and page permissions are enabled, anyone can create an account and contribute wiki pages. Review registration and page-permission settings before sharing the public URL.
 
-SQLite 데이터베이스는 `data/aon.sqlite`에 생성되고 이미지 파일은 `public/uploads/`에 저장됩니다. 두 위치를 정기적으로 백업하세요. `.env`의 GitHub 토큰은 비밀값이므로 외부에 공유하지 말고 저장소에 커밋하지 마세요.
+## HTTPS and public access with Cloudflare Tunnel
 
-## 외부 공개 및 유동 IP
+The Wiki.js container is not exposed directly to the Internet. The Cloudflare Tunnel container makes an outbound connection and forwards HTTPS requests to Wiki.js. The tunnel service has no host port open.
 
-현재 `aon69446.p-e.kr`은 GitHub Pages를 가리키도록 전환 중입니다. 집 서버의 공인 IP나 Deco 포트포워딩은 GitHub Pages 공개 사이트에 더 이상 사용하지 않습니다.
+1. Create a Cloudflare account and add a tunnel in **Zero Trust → Networks → Tunnels**. Choose the Docker connector and copy its tunnel token.
+2. Put the token in `.env.wiki` as `CLOUDFLARE_TUNNEL_TOKEN=...`. Keep this secret private.
+3. In the tunnel's public-hostname settings, route `aon69446.p-e.kr` to `http://wiki:3000`. If Cloudflare DNS prompts for a record, use the tunnel-generated CNAME target.
+4. Double-click `run-tunnel.bat`.
+5. Complete domain/DNS verification in Cloudflare. Then set Wiki.js's public site URL to `https://aon69446.p-e.kr` and test sign-in, registration, and page creation over HTTPS.
 
-`aon69446.p-e.kr`은 `p-e.kr` 아래의 하위 도메인이므로, `내도메인.한국` DNS 편집 화면에서:
+### DNS requirement and current HTTPS status
 
-1. 기존 이름(호스트) 칸은 비워 둡니다.
-2. 해당 이름에 체크된 A 레코드를 해제/삭제합니다. 같은 이름에는 A와 CNAME을 함께 둘 수 없습니다.
-3. CNAME 레코드를 체크하고 대상 값에 `aonhaka77-cyber.github.io`를 입력합니다.
-4. 다른 이름의 레코드는 건드리지 말고 저장합니다.
+The last check found that `aon69446.p-e.kr` still resolves to GitHub Pages A records (`185.199.108.153`, `185.199.109.153`, `185.199.110.153`, and `185.199.111.153`), and HTTPS fails with a certificate hostname mismatch. HTTPS is **not fixed yet**.
 
-GitHub Pages는 DNS에서 잘못된 A 레코드가 남아 있으면 인증서를 발급하지 못할 수 있습니다. 확인 명령은 `nslookup -type=CNAME aon69446.p-e.kr`이며, 결과가 `aonhaka77-cyber.github.io`여야 합니다. DNS 변경 전파 및 GitHub HTTPS 인증서 발급에는 시간이 걸릴 수 있습니다. HTTPS가 브라우저에서 정상 확인되기 전에는 편집 키나 다른 비밀 정보를 입력하지 마세요.
+Cloudflare Tunnel's custom hostname must be in a DNS zone managed by the same Cloudflare account as the tunnel. This domain is a subdomain of `p-e.kr`, currently served by `dnsze.com`; changing an A/CNAME record at the current DNS provider alone may not be sufficient for Cloudflare to issue and serve HTTPS. Check whether the domain control panel allows delegating `aon69446.p-e.kr` to Cloudflare's assigned nameservers. If it does not, ask the domain provider how to delegate the subdomain, or use a domain you can add to Cloudflare. Do not remove the working Pages DNS records until the Cloudflare hostname and certificate are ready; otherwise the public site may go offline.
 
-이 웹사이트는 `.github/workflows/pages.yml`을 통해 `main` 브랜치의 공개용 `index.html`과 사이트 자산을 자동 게시합니다. 게시 API는 SQLite 문서·스타일을 `index.html`에 포함하고 이미지 파일을 업로드합니다. 관리자 화면은 Pages 배포 대상에서 제외됩니다.
+GitHub Pages cannot keep serving the same hostname after its DNS is moved to the PC tunnel. The local Docker setup can be tested at `http://localhost:3030` before any DNS change.
+
+## Database backups
+
+Wiki.js stores its data in the Docker volume `wikijs-database`. Create and store PostgreSQL backups separately from this repository. For example, with the containers running:
+
+```powershell
+docker compose --env-file .env.wiki exec -T database pg_dump -U wikijs wikijs > wiki-backup.sql
+```
+
+The previous custom Node.js/SQLite editor remains in the source tree as legacy code, but `run.bat` now launches Wiki.js. GitHub Pages files and prior SQLite data are not automatically imported into Wiki.js.

@@ -1,0 +1,46 @@
+services:
+  database:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: wikijs
+      POSTGRES_USER: wikijs
+      POSTGRES_PASSWORD: ${WIKI_DB_PASSWORD:?Set WIKI_DB_PASSWORD in .env.wiki}
+    volumes:
+      - wikijs-database:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wikijs -d wikijs"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  wiki:
+    image: ghcr.io/requarks/wiki:2
+    restart: unless-stopped
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      DB_TYPE: postgres
+      DB_HOST: database
+      DB_PORT: 5432
+      DB_USER: wikijs
+      DB_PASS: ${WIKI_DB_PASSWORD:?Set WIKI_DB_PASSWORD in .env.wiki}
+      DB_NAME: wikijs
+    ports:
+      - "127.0.0.1:${WIKI_LOCAL_PORT:-3030}:3000"
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    profiles:
+      - tunnel
+    command:
+      - tunnel
+      - --no-autoupdate
+      - run
+      - --token
+      - ${CLOUDFLARE_TUNNEL_TOKEN:-}
+
+volumes:
+  wikijs-database:
