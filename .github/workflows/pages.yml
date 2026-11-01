@@ -36,7 +36,7 @@ jobs:
         run: |
           mkdir -p _site
           cp public/index.html public/styles.css public/app.js public/CNAME _site/
-          cp -R public/uploads _site/uploads
+          if [ -d public/uploads ]; then cp -R public/uploads _site/uploads; fi
       - name: Upload website files
         uses: actions/upload-pages-artifact@v3
         with:
