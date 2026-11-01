@@ -1,6 +1,6 @@
 # Aon 웹사이트
 
-GitHub Pages에 공개하는 Aon 문서형 위키입니다. 로컬 Node.js 서버는 SQLite 기반 CSS 편집과 이미지 업로드를 지원하지만, 정적 호스팅에서는 해당 편집 API를 사용할 수 없습니다.
+GitHub Pages에 공개하는 Aon 문서형 위키입니다. PC에서 실행하는 Node.js API와 SQLite에 문서·CSS·이미지 정보를 저장하고, 관리자 화면에서 GitHub에 게시하면 GitHub Pages가 공개 사이트를 갱신합니다.
 
 ## 실행 (Windows)
 
@@ -17,15 +17,32 @@ GitHub Pages에 공개하는 Aon 문서형 위키입니다. 로컬 Node.js 서�
    - `SESSION_SECRET`: 32자 이상의 무작위 문자열. 예: `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`
    - 사용자가 지정한 `akdhs323=gayok?` 키를 쓰려면 `SITE_EDIT_KEY` 값으로 설정합니다. 공개 사이트에서는 추측하기 쉬운 키 대신 더 긴 비밀 키를 권장합니다.
 
-사이트는 `http://localhost:3000`, 편집 화면은 `http://localhost:3000/admin.html`입니다. 편집 키는 편집 화면에서 입력합니다.
+사이트는 `http://localhost:3000`, 편집 화면은 `http://localhost:3000/admin.html`입니다. 편집 키는 편집 화면에서 입력합니다. 편집 API는 GitHub 토큰 보호를 위해 이 PC에서만 접속할 수 있도록 `127.0.0.1`에 바인딩됩니다.
+
+## GitHub에 게시하기
+
+GitHub Pages는 Node.js API나 SQLite를 실행하지 않습니다. 따라서 SQLite 데이터베이스 파일 자체를 GitHub에 올리는 대신, 관리자 화면에서 게시할 때 문서·CSS·이미지 목록을 `public/site-data.json`과 이미지 파일로 변환해 저장소에 커밋합니다. SQLite 데이터베이스와 원본 이미지는 PC의 `data/` 및 `public/uploads/`에 남습니다. GitHub Actions가 커밋을 받아 Pages 사이트를 배포합니다.
+
+게시 기능을 켜려면:
+
+1. GitHub에서 `aon694461` 저장소만 접근 가능한 Fine-grained personal access token을 만듭니다. `Contents: Read and write` 권한만 부여하세요.
+2. PC 프로젝트의 `.env` 맨 아래에 아래 값을 추가합니다. 토큰은 채팅, 브라우저 코드, 저장소에 올리지 마세요.
+   - `GITHUB_OWNER=aonhaka77-cyber`
+   - `GITHUB_REPO=aon694461`
+   - `GITHUB_BRANCH=main`
+   - `GITHUB_TOKEN=` 뒤에 발급받은 토큰
+3. `run.bat`으로 서버를 실행하고 `http://localhost:3000/admin.html`에서 로그인합니다.
+4. 문서와 CSS를 각각 저장하고, 필요한 이미지를 올린 다음 **GitHub에 게시**를 누릅니다. 이미지 최대 100개, 한 번 게시하는 전체 이미지 용량은 50MB입니다.
+
+GitHub 게시가 완료되어도 외부 사이트 반영에는 GitHub Actions 배포 시간이 추가로 필요합니다. PC API는 PC에서 실행할 때만 편집 기능을 제공합니다. 공개 페이지의 데이터는 Pages에 배포된 정적 파일을 사용하므로 PC 서버를 외부에 포트포워딩할 필요는 없습니다.
 
 ## GitHub Pages 배포
 
 `main` 브랜치의 `public/` 파일 변경은 GitHub Actions가 GitHub Pages에 자동 배포합니다. 도메인 `aon69446.p-e.kr`은 저장소의 `CNAME` 파일에 설정되어 있습니다. 이 하위 도메인의 DNS는 A 레코드 대신 GitHub Pages의 CNAME 대상을 사용해야 합니다. 자세한 내용은 아래 DNS 절차를 따르세요.
 
-GitHub Pages는 정적 호스팅이므로 공개 Aon 문서는 표시되지만, Node.js 서버와 SQLite가 필요한 CSS 저장, 로그인, 이미지 업로드 API는 Pages에서 실행되지 않습니다. 이 기능은 `run.bat`으로 실행하는 별도 Node.js 서버에서만 작동합니다. Pages의 편집 링크는 정적 호스팅의 이 제한과 문서 소스 수정 경로를 안내합니다.
+GitHub Pages는 정적 호스팅이므로 공개 Aon 문서는 표시되지만 Node.js/SQLite API는 실행되지 않습니다. 편집은 PC에서 `run.bat`으로 실행한 서버를 통해 하고, 변경 후 GitHub에 게시합니다.
 
-SQLite 데이터베이스는 `data/aon.sqlite`에 생성되고 이미지 파일은 `public/uploads/`에 저장됩니다. 두 위치를 정기적으로 백업하세요.
+SQLite 데이터베이스는 `data/aon.sqlite`에 생성되고 이미지 파일은 `public/uploads/`에 저장됩니다. 두 위치를 정기적으로 백업하세요. `.env`의 GitHub 토큰은 비밀값이므로 외부에 공유하지 말고 저장소에 커밋하지 마세요.
 
 ## 외부 공개 및 유동 IP
 
@@ -40,4 +57,4 @@ SQLite 데이터베이스는 `data/aon.sqlite`에 생성되고 이미지 파일�
 
 GitHub Pages는 DNS에서 잘못된 A 레코드가 남아 있으면 인증서를 발급하지 못할 수 있습니다. 확인 명령은 `nslookup -type=CNAME aon69446.p-e.kr`이며, 결과가 `aonhaka77-cyber.github.io`여야 합니다. DNS 변경 전파 및 GitHub HTTPS 인증서 발급에는 시간이 걸릴 수 있습니다. HTTPS가 브라우저에서 정상 확인되기 전에는 편집 키나 다른 비밀 정보를 입력하지 마세요.
 
-이 웹사이트는 `.github/workflows/pages.yml`을 통해 `main` 브랜치의 `public/`을 자동으로 게시합니다. GitHub Pages는 정적 호스팅이므로 문서 열람은 가능하지만 Node.js/SQLite 편집 및 이미지 업로드 API는 실행되지 않습니다.
+이 웹사이트는 `.github/workflows/pages.yml`을 통해 `main` 브랜치의 `public/`을 자동으로 게시합니다. `public/site-data.json`과 `public/uploads/`는 게시 시 로컬 SQLite 데이터 및 이미지에서 생성·갱신됩니다.

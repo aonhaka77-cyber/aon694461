@@ -52,7 +52,22 @@ const defaultCss = `/* Aon 사이트 디자인을 이곳에서 바꿀 수 있습
 .gallery img {
   border-radius: 16px;
 }`;
+const defaultDocument = {
+  title: "Aon",
+  summary: "Aon에 관한 정보를 모아 둔 문서입니다.",
+  overview: "Aon은 아이디어와 취향을 기록하고 나누기 위한 개인 공간입니다. 이곳에는 Aon의 소개와 이미지, 앞으로 더해질 이야기들이 정리됩니다.\n\n이 사이트는 직접 관리하는 작은 위키처럼 운영됩니다. 편집 권한이 있는 사용자는 사이트 편집 메뉴에서 이미지를 추가하고 페이지의 CSS 디자인을 바꿀 수 있습니다.",
+  features: [
+    "방문자에게 공개되는 Aon 소개 페이지",
+    "편집 화면에서 이미지 업로드 및 갤러리 게시",
+    "CSS 편집으로 페이지 분위기와 배치 변경"
+  ],
+  galleryIntro: "편집 화면에서 등록된 이미지는 이 문서를 방문하는 사람에게도 표시됩니다."
+};
 db.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)").run("site_css", defaultCss);
+db.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)").run(
+  "site_document",
+  JSON.stringify(defaultDocument)
+);
 
 app.disable("x-powered-by");
 if (isProduction) {
@@ -183,10 +198,47 @@ app.get("/api/editor/session", (req, res) => {
 
 app.get("/api/site", (_req, res) => {
   const css = db.prepare("SELECT value FROM settings WHERE key = ?").get("site_css").value;
+  const document = JSON.parse(
+    db.prepare("SELECT value FROM settings WHERE key = ?").get("site_document").value
+  );
   const images = db.prepare(
     "SELECT id, original_name AS originalName, '/uploads/' || filename AS url FROM images ORDER BY created_at DESC"
   ).all();
-  res.json({ css, images });
+  res.json({ document, css, images });
+});
+
+app.put("/api/editor/document", requireEditor, (req, res) => {
+  const document = req.body?.document;
+  if (
+    !document
+    || typeof document.title !== "string"
+    || document.title.trim().length < 1
+    || document.title.length > 120
+    || typeof document.summary !== "string"
+    || document.summary.length > 500
+    || typeof document.overview !== "string"
+    || document.overview.length > 20000
+    || !Array.isArray(document.features)
+    || document.features.length > 30
+    || document.features.some((item) => typeof item !== "string" || item.length > 500)
+    || typeof document.galleryIntro !== "string"
+    || document.galleryIntro.length > 2000
+  ) {
+    return res.status(400).json({ error: "문서 내용을 확인해 주세요. 항목별 글자 수 제한을 넘었거나 형식이 올바르지 않습니다." });
+  }
+
+  const normalizedDocument = {
+    title: document.title.trim(),
+    summary: document.summary.trim(),
+    overview: document.overview.trim(),
+    features: document.features.map((item) => item.trim()).filter(Boolean),
+    galleryIntro: document.galleryIntro.trim()
+  };
+  db.prepare("UPDATE settings SET value = ? WHERE key = ?").run(
+    JSON.stringify(normalizedDocument),
+    "site_document"
+  );
+  res.json({ ok: true });
 });
 
 app.put("/api/editor/css", requireEditor, (req, res) => {
@@ -214,6 +266,121 @@ app.post("/api/editor/images", requireEditor, upload.single("image"), (req, res)
   });
 });
 
+app.post("/api/editor/publish", requireEditor, async (_req, res) => {
+  const owner = process.env.GITHUB_OWNER;
+  const repository = process.env.GITHUB_REPO;
+  const branch = process.env.GITHUB_BRANCH || "main";
+  const token = process.env.GITHUB_TOKEN;
+  if (!owner || !repository || !token) {
+    return res.status(503).json({
+      error: "GitHub 게시 설정이 없습니다. .env에 GITHUB_OWNER, GITHUB_REPO, GITHUB_TOKEN을 설정해 주세요."
+    });
+  }
+  if (!/^[\w.-]+$/.test(owner) || !/^[\w.-]+$/.test(repository) || !/^[\w./-]+$/.test(branch)) {
+    return res.status(500).json({ error: "GitHub 저장소 또는 브랜치 설정이 올바르지 않습니다." });
+  }
+
+  try {
+    const images = db.prepare(
+      "SELECT filename FROM images ORDER BY created_at DESC"
+    ).all();
+    const siteData = {
+      document: JSON.parse(
+        db.prepare("SELECT value FROM settings WHERE key = ?").get("site_document").value
+      ),
+      css: db.prepare("SELECT value FROM settings WHERE key = ?").get("site_css").value,
+      images: db.prepare(
+        "SELECT id, original_name AS originalName, '/uploads/' || filename AS url FROM images ORDER BY created_at DESC"
+      ).all()
+    };
+    const files = [
+      {
+        path: "public/site-data.json",
+        content: Buffer.from(`${JSON.stringify(siteData, null, 2)}\n`)
+      }
+    ];
+    let totalImageBytes = 0;
+    for (const image of images) {
+      if (path.basename(image.filename) !== image.filename) {
+        throw new Error("데이터베이스의 이미지 파일 경로가 올바르지 않습니다.");
+      }
+      const filePath = path.join(uploadsDir, image.filename);
+      const content = fs.readFileSync(filePath);
+      totalImageBytes += content.length;
+      files.push({ path: `public/uploads/${image.filename}`, content });
+    }
+    if (files.length > 101 || totalImageBytes > 50 * 1024 * 1024) {
+      return res.status(413).json({
+        error: "한 번에 게시할 수 있는 이미지는 최대 100개, 전체 용량은 50MB입니다."
+      });
+    }
+
+    const apiBase = `https://api.github.com/repos/${owner}/${repository}`;
+    const githubRequest = async (endpoint, options = {}) => {
+      const response = await fetch(`${apiBase}${endpoint}`, {
+        ...options,
+        headers: {
+          Accept: "application/vnd.github+json",
+          Authorization: `Bearer ${token}`,
+          "X-GitHub-Api-Version": "2022-11-28",
+          "Content-Type": "application/json",
+          ...options.headers
+        }
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(`GitHub API 요청 실패 (${response.status}): ${result.message || "게시할 수 없습니다."}`);
+      }
+      return result;
+    };
+
+    const ref = await githubRequest(`/git/ref/heads/${encodeURIComponent(branch)}`);
+    const parentSha = ref.object.sha;
+    const parentCommit = await githubRequest(`/git/commits/${parentSha}`);
+    const blobs = await Promise.all(files.map(async (file) => {
+      const blob = await githubRequest("/git/blobs", {
+        method: "POST",
+        body: JSON.stringify({
+          content: file.content.toString("base64"),
+          encoding: "base64"
+        })
+      });
+      return {
+        path: file.path,
+        mode: "100644",
+        type: "blob",
+        sha: blob.sha
+      };
+    }));
+    const tree = await githubRequest("/git/trees", {
+      method: "POST",
+      body: JSON.stringify({ base_tree: parentCommit.tree.sha, tree: blobs })
+    });
+    const commit = await githubRequest("/git/commits", {
+      method: "POST",
+      body: JSON.stringify({
+        message: "Publish Aon site content",
+        tree: tree.sha,
+        parents: [parentSha]
+      })
+    });
+    await githubRequest(`/git/refs/heads/${encodeURIComponent(branch)}`, {
+      method: "PATCH",
+      body: JSON.stringify({ sha: commit.sha, force: false })
+    });
+    res.json({
+      ok: true,
+      commit: commit.sha,
+      url: `https://github.com/${owner}/${repository}/commit/${commit.sha}`
+    });
+  } catch (error) {
+    console.error("GitHub publish failed:", error);
+    res.status(502).json({
+      error: error instanceof Error ? error.message : "GitHub에 게시하지 못했습니다."
+    });
+  }
+});
+
 app.use(express.static(publicDir, {
   etag: true,
   maxAge: isProduction ? "1h" : 0,
@@ -239,8 +406,8 @@ app.use((err, _req, res, _next) => {
   }
 });
 
-const server = app.listen(port, "0.0.0.0", () => {
-  console.log(`Aon is listening on 0.0.0.0:${port}`);
+const server = app.listen(port, "127.0.0.1", () => {
+  console.log(`Aon is listening on http://127.0.0.1:${port}`);
 });
 
 function shutdown() {
