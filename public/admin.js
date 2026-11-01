@@ -115,6 +115,7 @@ if (isGitHubPages) {
   editor.hidden = true;
   staticHostMessage.hidden = false;
 } else {
+  staticHostMessage.hidden = true;
   loadEditor().catch((error) => {
     setStatus(error.message, true);
   });
