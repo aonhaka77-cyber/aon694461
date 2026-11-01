@@ -1,6 +1,6 @@
 # Aon 웹사이트
 
-Node.js 내장 SQLite를 사용하는 Aon 소개 사이트입니다. 공개 페이지에는 Aon 소개와 업로드 이미지가 표시되고, `/admin.html`에서 편집 키로 로그인하면 이미지 업로드 및 사이트 CSS 편집이 가능합니다. 임의의 서버 파일이나 프로그램 코드는 편집할 수 없습니다.
+GitHub Pages에 공개하는 Aon 문서형 위키입니다. 로컬 Node.js 서버는 SQLite 기반 CSS 편집과 이미지 업로드를 지원하지만, 정적 호스팅에서는 해당 편집 API를 사용할 수 없습니다.
 
 ## 실행 (Windows)
 
@@ -21,7 +21,7 @@ Node.js 내장 SQLite를 사용하는 Aon 소개 사이트입니다. 공개 페�
 
 ## GitHub Pages 배포
 
-`main` 브랜치의 `public/` 파일 변경은 GitHub Actions가 GitHub Pages에 자동 배포합니다. 도메인 `aon69446.p-e.kr`은 저장소의 `CNAME` 파일에 설정되어 있습니다. DNS의 A 레코드는 GitHub Pages IPv4 주소로 지정되어 있어야 합니다.
+`main` 브랜치의 `public/` 파일 변경은 GitHub Actions가 GitHub Pages에 자동 배포합니다. 도메인 `aon69446.p-e.kr`은 저장소의 `CNAME` 파일에 설정되어 있습니다. 이 하위 도메인의 DNS는 A 레코드 대신 GitHub Pages의 CNAME 대상을 사용해야 합니다. 자세한 내용은 아래 DNS 절차를 따르세요.
 
 GitHub Pages는 정적 호스팅이므로 공개 Aon 문서는 표시되지만, Node.js 서버와 SQLite가 필요한 CSS 저장, 로그인, 이미지 업로드 API는 Pages에서 실행되지 않습니다. 이 기능은 `run.bat`으로 실행하는 별도 Node.js 서버에서만 작동합니다. Pages의 편집 링크는 정적 호스팅의 이 제한과 문서 소스 수정 경로를 안내합니다.
 
