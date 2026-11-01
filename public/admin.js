@@ -3,12 +3,12 @@ const editor = document.querySelector("#editor");
 const statusMessage = document.querySelector("#status");
 const cssEditor = document.querySelector("#css-editor");
 const imageList = document.querySelector("#image-list");
+const imageSelector = document.querySelector("#image-selector");
 const staticHostMessage = document.querySelector("#static-host-message");
 const documentTitle = document.querySelector("#document-title");
 const documentSummary = document.querySelector("#document-summary");
-const documentOverview = document.querySelector("#document-overview");
-const documentFeatures = document.querySelector("#document-features");
-const documentGalleryIntro = document.querySelector("#document-gallery-intro");
+const documentBody = document.querySelector("#document-body");
+const imageRefs = [];
 const publishButton = document.querySelector("#publish-button");
 
 const isGitHubPages = location.hostname === "aon69446.p-e.kr"
@@ -29,6 +29,7 @@ async function request(url, options = {}) {
 }
 
 function renderImages(images) {
+  const previousSelection = imageSelector.value;
   imageList.replaceChildren(...images.map((image) => {
     const item = document.createElement("div");
     item.className = "image-item";
@@ -40,6 +41,15 @@ function renderImages(images) {
     item.append(preview, name);
     return item;
   }));
+  imageSelector.replaceChildren(...images.map((image) => {
+    const option = document.createElement("option");
+    option.value = image.id;
+    option.textContent = image.originalName;
+    return option;
+  }));
+  if (images.some((image) => image.id === previousSelection)) {
+    imageSelector.value = previousSelection;
+  }
 }
 
 async function loadEditor() {
@@ -53,9 +63,8 @@ async function loadEditor() {
   const site = await request("/api/site");
   documentTitle.value = site.document.title;
   documentSummary.value = site.document.summary;
-  documentOverview.value = site.document.overview;
-  documentFeatures.value = site.document.features.join("\n");
-  documentGalleryIntro.value = site.document.galleryIntro;
+  documentBody.value = site.document.body;
+  imageRefs.splice(0, imageRefs.length, ...site.document.imageRefs);
   cssEditor.value = site.css;
   renderImages(site.images);
 }
@@ -90,15 +99,43 @@ document.querySelector("#document-form").addEventListener("submit", async (event
         document: {
           title: documentTitle.value,
           summary: documentSummary.value,
-          overview: documentOverview.value,
-          features: documentFeatures.value.split(/\r?\n/),
-          galleryIntro: documentGalleryIntro.value
+          body: documentBody.value,
+          imageRefs
         }
       })
     });
     setStatus("문서를 SQLite 데이터베이스에 저장했습니다.");
   } catch (error) {
     setStatus(error.message, true);
+  }
+});
+
+document.querySelector("#insert-image-button").addEventListener("click", () => {
+  const imageId = imageSelector.value;
+  if (!imageId) {
+    setStatus("먼저 이미지를 업로드해 주세요.", true);
+    return;
+  }
+
+  const start = documentBody.selectionStart;
+  const end = documentBody.selectionEnd;
+  const markerIndex = (documentBody.value.slice(0, start).match(/\{이미지\}/g) || []).length;
+  const insertion = `${start > 0 && documentBody.value[start - 1] !== "\n" ? "\n" : ""}{이미지}${end < documentBody.value.length && documentBody.value[end] !== "\n" ? "\n" : ""}`;
+  documentBody.setRangeText(insertion, start, end, "end");
+  imageRefs.splice(markerIndex, 0, imageId);
+  documentBody.focus();
+  setStatus("커서 위치에 {이미지}를 넣고 선택한 이미지와 연결했습니다.");
+});
+
+documentBody.addEventListener("input", () => {
+  const markerCount = (documentBody.value.match(/^\s*\{이미지\}\s*$/gm) || []).length;
+  if (markerCount < imageRefs.length) {
+    imageRefs.splice(markerCount);
+  }
+  if (markerCount !== imageRefs.length) {
+    setStatus("본문의 {이미지} 표식마다 이미지 삽입 버튼으로 사진을 연결해 주세요.", true);
+  } else {
+    setStatus("");
   }
 });
 

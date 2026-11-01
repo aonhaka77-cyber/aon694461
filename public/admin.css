@@ -48,6 +48,7 @@
 .panel input[type="password"],
 .panel input[type="file"],
 .panel input[type="text"],
+.panel select,
 .panel textarea {
   width: 100%;
   padding: 12px;
@@ -80,6 +81,42 @@
   border: 1px solid #d6dae4;
   border-radius: 8px;
   font: inherit;
+}
+
+.panel .document-fields textarea {
+  min-height: 360px;
+}
+
+.image-insert-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.image-insert-controls select {
+  flex: 1 1 220px;
+}
+
+.wiki-help {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: #667085;
+  font-size: 0.8rem;
+}
+
+.wiki-help code {
+  padding: 3px 6px;
+  border-radius: 4px;
+  background: #f0f2f6;
+  color: #35405a;
+}
+
+.panel .field-help {
+  margin: 0;
+  font-size: 0.85rem;
 }
 
 .panel button {

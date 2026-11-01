@@ -32,10 +32,15 @@ jobs:
         uses: actions/configure-pages@v5
         with:
           enablement: true
+      - name: Prepare single-page website
+        run: |
+          mkdir -p _site
+          cp public/index.html public/styles.css public/app.js public/CNAME _site/
+          cp -R public/uploads _site/uploads
       - name: Upload website files
         uses: actions/upload-pages-artifact@v3
         with:
-          path: public
+          path: _site
       - name: Deploy website
         id: deployment
         uses: actions/deploy-pages@v4

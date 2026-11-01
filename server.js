@@ -12,6 +12,7 @@ const port = Number(process.env.PORT || 3000);
 const isProduction = process.env.NODE_ENV === "production";
 const rootDir = __dirname;
 const publicDir = path.join(rootDir, "public");
+const editorDir = path.join(rootDir, "editor");
 const uploadsDir = path.join(publicDir, "uploads");
 const dataDir = path.join(rootDir, "data");
 
@@ -55,19 +56,46 @@ const defaultCss = `/* Aon 사이트 디자인을 이곳에서 바꿀 수 있습
 const defaultDocument = {
   title: "Aon",
   summary: "Aon에 관한 정보를 모아 둔 문서입니다.",
-  overview: "Aon은 아이디어와 취향을 기록하고 나누기 위한 개인 공간입니다. 이곳에는 Aon의 소개와 이미지, 앞으로 더해질 이야기들이 정리됩니다.\n\n이 사이트는 직접 관리하는 작은 위키처럼 운영됩니다. 편집 권한이 있는 사용자는 사이트 편집 메뉴에서 이미지를 추가하고 페이지의 CSS 디자인을 바꿀 수 있습니다.",
-  features: [
-    "방문자에게 공개되는 Aon 소개 페이지",
-    "편집 화면에서 이미지 업로드 및 갤러리 게시",
-    "CSS 편집으로 페이지 분위기와 배치 변경"
-  ],
-  galleryIntro: "편집 화면에서 등록된 이미지는 이 문서를 방문하는 사람에게도 표시됩니다."
+  body: "== 개요 ==\nAon은 아이디어와 취향을 기록하고 나누기 위한 개인 공간이다. 이 문서에 Aon에 관한 내용을 자유롭게 정리할 수 있다.\n\n== 특징 ==\n * Aon을 소개하는 개인 위키 문서\n * 문서 안에 이미지를 원하는 위치에 삽입\n\n== 이미지 ==\n이미지를 업로드한 뒤 편집기에서 원하는 위치에 삽입한다.",
+  imageRefs: []
 };
 db.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)").run("site_css", defaultCss);
 db.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)").run(
   "site_document",
   JSON.stringify(defaultDocument)
 );
+const storedDocument = JSON.parse(
+  db.prepare("SELECT value FROM settings WHERE key = ?").get("site_document").value
+);
+if (typeof storedDocument.body !== "string") {
+  const legacyImages = db.prepare(
+    "SELECT id FROM images ORDER BY created_at DESC"
+  ).all();
+  const legacyBody = [
+    "== 개요 ==",
+    storedDocument.overview || defaultDocument.body.split("\n")[1],
+    ...(Array.isArray(storedDocument.features) && storedDocument.features.length
+      ? ["", "== 주요 기능 ==", ...storedDocument.features.map((feature) => ` * ${feature}`)]
+      : []),
+    ...(storedDocument.galleryIntro || legacyImages.length
+      ? [
+          "",
+          "== 이미지 모음 ==",
+          ...(storedDocument.galleryIntro ? [storedDocument.galleryIntro] : []),
+          ...legacyImages.map(() => "{이미지}")
+        ]
+      : [])
+  ].join("\n");
+  db.prepare("UPDATE settings SET value = ? WHERE key = ?").run(
+    JSON.stringify({
+      title: storedDocument.title || "Aon",
+      summary: storedDocument.summary || "",
+      body: legacyBody,
+      imageRefs: legacyImages.map((image) => image.id)
+    }),
+    "site_document"
+  );
+}
 
 app.disable("x-powered-by");
 if (isProduction) {
@@ -216,23 +244,30 @@ app.put("/api/editor/document", requireEditor, (req, res) => {
     || document.title.length > 120
     || typeof document.summary !== "string"
     || document.summary.length > 500
-    || typeof document.overview !== "string"
-    || document.overview.length > 20000
-    || !Array.isArray(document.features)
-    || document.features.length > 30
-    || document.features.some((item) => typeof item !== "string" || item.length > 500)
-    || typeof document.galleryIntro !== "string"
-    || document.galleryIntro.length > 2000
+    || typeof document.body !== "string"
+    || document.body.trim().length < 1
+    || document.body.length > 50000
+    || !Array.isArray(document.imageRefs)
+    || document.imageRefs.length > 100
+    || document.imageRefs.some((id) => typeof id !== "string")
+    || (document.body.match(/^\s*\{이미지\}\s*$/gm) || []).length !== document.imageRefs.length
   ) {
-    return res.status(400).json({ error: "문서 내용을 확인해 주세요. 항목별 글자 수 제한을 넘었거나 형식이 올바르지 않습니다." });
+    return res.status(400).json({ error: "문서 내용을 확인해 주세요. {이미지} 개수와 삽입할 이미지 개수가 같아야 합니다." });
+  }
+
+  const uniqueImageRefs = [...new Set(document.imageRefs)];
+  const availableImages = db.prepare(
+    `SELECT id FROM images WHERE id IN (${uniqueImageRefs.map(() => "?").join(",") || "NULL"})`
+  ).all(...uniqueImageRefs).map((image) => image.id);
+  if (availableImages.length !== uniqueImageRefs.length) {
+    return res.status(400).json({ error: "문서에 연결한 이미지 중 업로드되지 않은 이미지가 있습니다." });
   }
 
   const normalizedDocument = {
     title: document.title.trim(),
     summary: document.summary.trim(),
-    overview: document.overview.trim(),
-    features: document.features.map((item) => item.trim()).filter(Boolean),
-    galleryIntro: document.galleryIntro.trim()
+    body: document.body.trim(),
+    imageRefs: document.imageRefs
   };
   db.prepare("UPDATE settings SET value = ? WHERE key = ?").run(
     JSON.stringify(normalizedDocument),
@@ -293,10 +328,25 @@ app.post("/api/editor/publish", requireEditor, async (_req, res) => {
         "SELECT id, original_name AS originalName, '/uploads/' || filename AS url FROM images ORDER BY created_at DESC"
       ).all()
     };
+    const indexPath = path.join(publicDir, "index.html");
+    const indexTemplate = fs.readFileSync(indexPath, "utf8");
+    const marker = /(<script id="site-data" type="application\/json">)[\s\S]*?(<\/script>)/;
+    if (!marker.test(indexTemplate)) {
+      throw new Error("public/index.html에 사이트 데이터 삽입 위치가 없습니다.");
+    }
+    const embeddedData = JSON.stringify(siteData)
+      .replace(/</g, "\\u003c")
+      .replace(/>/g, "\\u003e")
+      .replace(/&/g, "\\u0026")
+      .replace(/\u2028/g, "\\u2028")
+      .replace(/\u2029/g, "\\u2029");
     const files = [
       {
-        path: "public/site-data.json",
-        content: Buffer.from(`${JSON.stringify(siteData, null, 2)}\n`)
+        path: "public/index.html",
+        content: Buffer.from(indexTemplate.replace(
+          marker,
+          (_match, prefix, suffix) => `${prefix}${embeddedData}${suffix}`
+        ))
       }
     ];
     let totalImageBytes = 0;
@@ -379,6 +429,10 @@ app.post("/api/editor/publish", requireEditor, async (_req, res) => {
       error: error instanceof Error ? error.message : "GitHub에 게시하지 못했습니다."
     });
   }
+});
+
+app.get("/admin.html", (_req, res) => {
+  res.sendFile(path.join(editorDir, "index.html"));
 });
 
 app.use(express.static(publicDir, {

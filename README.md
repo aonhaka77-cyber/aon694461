@@ -21,7 +21,9 @@ GitHub Pages에 공개하는 Aon 문서형 위키입니다. PC에서 실행하�
 
 ## GitHub에 게시하기
 
-GitHub Pages는 Node.js API나 SQLite를 실행하지 않습니다. 따라서 SQLite 데이터베이스 파일 자체를 GitHub에 올리는 대신, 관리자 화면에서 게시할 때 문서·CSS·이미지 목록을 `public/site-data.json`과 이미지 파일로 변환해 저장소에 커밋합니다. SQLite 데이터베이스와 원본 이미지는 PC의 `data/` 및 `public/uploads/`에 남습니다. GitHub Actions가 커밋을 받아 Pages 사이트를 배포합니다.
+GitHub Pages는 Node.js API나 SQLite를 실행하지 않습니다. PC의 SQLite에 저장된 위키 문서와 CSS는 게시할 때 `public/index.html` 안에 데이터로 포함되고, 이미지는 별도 파일로 저장소에 커밋됩니다. GitHub Actions는 공개 사이트에 `index.html` 한 개와 스타일·스크립트·이미지 파일만 배포합니다. 로그인/편집 화면은 PC에서만 사용합니다.
+
+본문은 나무위키 문서처럼 위키 문법으로 작성합니다. `== 제목 ==`은 문단 제목, `'''굵게'''`는 굵은 글씨, `''기울임''`은 기울임, `[[표시 문구|https://주소]]`는 링크, `* 항목`과 `# 항목`은 목록입니다. 이미지를 올린 다음 본문에서 원하는 위치에 커서를 두고 이미지 선택 후 **커서 위치에 {이미지} 삽입** 버튼을 누르세요. `{이미지}` 표식과 선택한 이미지가 해당 위치에서 함께 표시됩니다.
 
 게시 기능을 켜려면:
 
@@ -32,7 +34,7 @@ GitHub Pages는 Node.js API나 SQLite를 실행하지 않습니다. 따라서 SQ
    - `GITHUB_BRANCH=main`
    - `GITHUB_TOKEN=` 뒤에 발급받은 토큰
 3. `run.bat`으로 서버를 실행하고 `http://localhost:3000/admin.html`에서 로그인합니다.
-4. 문서와 CSS를 각각 저장하고, 필요한 이미지를 올린 다음 **GitHub에 게시**를 누릅니다. 이미지 최대 100개, 한 번 게시하는 전체 이미지 용량은 50MB입니다.
+4. 위키 문서와 CSS를 저장하고, 이미지를 올려 본문에 삽입한 다음 **GitHub에 게시**를 누릅니다. 이미지 최대 100개, 한 번 게시하는 전체 이미지 용량은 50MB입니다.
 
 GitHub 게시가 완료되어도 외부 사이트 반영에는 GitHub Actions 배포 시간이 추가로 필요합니다. PC API는 PC에서 실행할 때만 편집 기능을 제공합니다. 공개 페이지의 데이터는 Pages에 배포된 정적 파일을 사용하므로 PC 서버를 외부에 포트포워딩할 필요는 없습니다.
 
@@ -57,4 +59,4 @@ SQLite 데이터베이스는 `data/aon.sqlite`에 생성되고 이미지 파일�
 
 GitHub Pages는 DNS에서 잘못된 A 레코드가 남아 있으면 인증서를 발급하지 못할 수 있습니다. 확인 명령은 `nslookup -type=CNAME aon69446.p-e.kr`이며, 결과가 `aonhaka77-cyber.github.io`여야 합니다. DNS 변경 전파 및 GitHub HTTPS 인증서 발급에는 시간이 걸릴 수 있습니다. HTTPS가 브라우저에서 정상 확인되기 전에는 편집 키나 다른 비밀 정보를 입력하지 마세요.
 
-이 웹사이트는 `.github/workflows/pages.yml`을 통해 `main` 브랜치의 `public/`을 자동으로 게시합니다. `public/site-data.json`과 `public/uploads/`는 게시 시 로컬 SQLite 데이터 및 이미지에서 생성·갱신됩니다.
+이 웹사이트는 `.github/workflows/pages.yml`을 통해 `main` 브랜치의 공개용 `index.html`과 사이트 자산을 자동 게시합니다. 게시 API는 SQLite 문서·스타일을 `index.html`에 포함하고 이미지 파일을 업로드합니다. 관리자 화면은 Pages 배포 대상에서 제외됩니다.

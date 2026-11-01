@@ -243,9 +243,62 @@ a:hover {
   font-size: 0.94rem;
 }
 
+.article-section ol {
+  padding-left: 1.4rem;
+  color: #3e4653;
+  font-size: 0.94rem;
+}
+
 .article-section li {
   padding-left: 3px;
   margin: 5px 0;
+}
+
+.wiki-content h3,
+.wiki-content h4 {
+  margin: 22px 0 10px;
+  color: #27344a;
+}
+
+.wiki-content a {
+  overflow-wrap: anywhere;
+}
+
+.wiki-content code {
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: #f0f2f6;
+  color: #35405a;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.9em;
+}
+
+.wiki-image {
+  width: min(100%, 620px);
+  margin: 18px auto;
+  text-align: center;
+}
+
+.wiki-image img {
+  display: block;
+  max-width: 100%;
+  max-height: 620px;
+  margin: 0 auto;
+  object-fit: contain;
+  border: 1px solid #e1e5eb;
+  border-radius: 5px;
+}
+
+.wiki-image figcaption {
+  margin-top: 6px;
+  color: #7a8391;
+  font-size: 0.8rem;
+}
+
+.wiki-content hr {
+  margin: 22px 0;
+  border: 0;
+  border-top: 1px solid #dfe3e9;
 }
 
 .article-aside {
@@ -317,6 +370,10 @@ a:hover {
   gap: 8px;
   padding: 5px 0;
   font-size: 0.81rem;
+}
+
+.toc > div {
+  display: grid;
 }
 
 .toc a span {

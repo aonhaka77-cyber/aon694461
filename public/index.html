@@ -6,6 +6,7 @@
     <meta name="description" content="Aon에 관한 정보를 정리한 개인 위키입니다.">
     <title>Aon - Aon 위키</title>
     <link rel="stylesheet" href="/styles.css">
+    <script id="site-data" type="application/json">{"document":{"title":"Aon","summary":"Aon에 관한 정보를 모아 둔 문서입니다.","body":"== 개요 ==\nAon은 아이디어와 취향을 기록하고 나누기 위한 개인 공간이다. 이 문서에 Aon에 관한 내용을 자유롭게 정리할 수 있다.\n\n== 특징 ==\n * Aon을 소개하는 개인 위키 문서\n * 문서 안에 이미지를 원하는 위치에 삽입\n\n== 이미지 ==\n이미지를 업로드한 뒤 편집기에서 원하는 위치에 삽입한다.","imageRefs":[]},"css":"","images":[]}</script>
     <script src="/app.js" defer></script>
   </head>
   <body>
@@ -15,9 +16,8 @@
         <span>Aon<span class="brand-suffix"> 위키</span></span>
       </a>
       <nav class="header-links" aria-label="주요 메뉴">
-        <a href="#about">문서</a>
-        <a href="#gallery">갤러리</a>
-        <a href="/admin.html">편집</a>
+        <a href="#wiki-content">문서</a>
+        <a href="https://github.com/aonhaka77-cyber/aon694461">저장소</a>
       </nav>
     </header>
 
@@ -25,9 +25,7 @@
       <aside class="sidebar" aria-label="위키 메뉴">
         <a href="/" class="sidebar-home">Aon 위키 홈</a>
         <p class="sidebar-heading">둘러보기</p>
-        <a href="#about">Aon 문서</a>
-        <a href="#gallery">이미지 모음</a>
-        <a href="/admin.html">문서 디자인 편집</a>
+        <a href="#wiki-content">Aon 문서</a>
         <div class="sidebar-note">
           <span class="note-label">AON ARCHIVE</span>
           <p>작은 기록과 이야기를 차곡차곡 모으는 공간입니다.</p>
@@ -38,40 +36,14 @@
         <div class="breadcrumbs"><a href="/">위키</a><span aria-hidden="true">›</span><span>Aon</span></div>
         <article>
           <header class="article-header">
-            <div class="article-kicker">인물 · 프로젝트</div>
+            <div class="article-kicker">개인 위키</div>
             <h1 id="document-title">Aon</h1>
             <p class="article-summary" id="document-summary">Aon에 관한 정보를 모아 둔 문서입니다.</p>
-            <div class="article-meta"><span>최근 수정: <time id="updated-date"></time></span><a href="/admin.html">문서 디자인 편집</a></div>
+            <div class="article-meta"><span>최근 수정: <time id="updated-date"></time></span><a href="https://github.com/aonhaka77-cyber/aon694461">문서 정보</a></div>
           </header>
 
           <div class="article-layout">
-            <div class="article-body">
-              <section id="about" class="article-section">
-                <h2><span class="section-number">1.</span> 개요</h2>
-                <div id="document-overview">
-                  <p>Aon은 아이디어와 취향을 기록하고 나누기 위한 개인 공간입니다. 이곳에는 Aon의 소개와 이미지, 앞으로 더해질 이야기들이 정리됩니다.</p>
-                  <p>이 사이트는 직접 관리하는 작은 위키처럼 운영됩니다. 편집 권한이 있는 사용자는 사이트 편집 메뉴에서 이미지를 추가하고 페이지의 CSS 디자인을 바꿀 수 있습니다.</p>
-                </div>
-              </section>
-
-              <section id="features" class="article-section">
-                <h2><span class="section-number">2.</span> 주요 기능</h2>
-                <ul id="document-features">
-                  <li>방문자에게 공개되는 Aon 소개 페이지</li>
-                  <li>편집 화면에서 이미지 업로드 및 갤러리 게시</li>
-                  <li>CSS 편집으로 페이지 분위기와 배치 변경</li>
-                </ul>
-              </section>
-
-              <section id="gallery-section" class="article-section">
-                <h2><span class="section-number">3.</span> 이미지 모음</h2>
-                <p id="document-gallery-intro">편집 화면에서 등록된 이미지는 이 문서를 방문하는 사람에게도 표시됩니다.</p>
-                <div class="gallery" id="gallery">
-                  <p class="empty-gallery">아직 등록된 이미지가 없습니다.</p>
-                </div>
-              </section>
-            </div>
-
+            <div class="article-body wiki-content" id="wiki-content"></div>
             <aside class="article-aside">
               <section class="info-card" aria-label="Aon 문서 정보">
                 <h2>Aon</h2>
@@ -84,9 +56,7 @@
               </section>
               <nav class="toc" aria-label="목차">
                 <h2>목차</h2>
-                <a href="#about"><span>1.</span> 개요</a>
-                <a href="#features"><span>2.</span> 주요 기능</a>
-                <a href="#gallery-section"><span>3.</span> 이미지 모음</a>
+                <div id="toc-links"></div>
               </nav>
             </aside>
           </div>
